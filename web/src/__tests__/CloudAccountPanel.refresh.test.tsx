@@ -140,9 +140,8 @@ describe("CloudAccountPanel saved operation refresh", () => {
 
   it("releases the loading control and preserves stale-operation cleanup on rejection", async () => {
     sessionStorage.setItem(storageKey, pendingOperation.operationId);
-    vi.mocked(api.fetchPersonalOperation)
-      .mockResolvedValueOnce(pendingOperation)
-      .mockRejectedValueOnce(new Error("synthetic lookup failure"));
+    const failedLookup = deferred<api.PersonalOperation>();
+    vi.mocked(api.fetchPersonalOperation).mockResolvedValueOnce(pendingOperation);
     render(<CloudAccountPanel />);
 
     const refreshButton = await screen.findByRole("button", {
@@ -150,10 +149,15 @@ describe("CloudAccountPanel saved operation refresh", () => {
     });
     await waitFor(() => expect(api.fetchPersonalOperation).toHaveBeenCalledTimes(1));
 
+    vi.mocked(api.fetchPersonalOperation).mockReturnValueOnce(failedLookup.promise);
     fireEvent.click(refreshButton);
     expect(await screen.findByRole("button", {
       name: "Refreshing payment status…",
     })).toBeDisabled();
+
+    await act(async () => {
+      failedLookup.reject(new Error("synthetic lookup failure"));
+    });
 
     expect(await screen.findByRole("button", { name: "Refresh payment status" }))
       .toBeEnabled();

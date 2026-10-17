@@ -129,7 +129,7 @@ describe("CloudAccountPanel saved operation refresh", () => {
         .toBeEnabled(),
     );
 
-    expect(api.fetchPersonalOperation.mock.calls).toEqual([
+    expect(vi.mocked(api.fetchPersonalOperation).mock.calls).toEqual([
       [pendingOperation.operationId],
       [pendingOperation.operationId],
       [pendingOperation.operationId],
